@@ -11,8 +11,8 @@ Dataset location and description is provided in the link listed https://archive.
 
 import matplotlib
 matplotlib.use('tkagg')
-
 import matplotlib.pyplot as plt
+
 import numpy as np
 import pandas as pd
 
@@ -20,54 +20,40 @@ from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import classification_report
+
 from pcm import plot_confusion_matrix
 
-
 '''
-reading the data from https://archive.ics.uci.edu/ml/machine-learning-databases/00388/
-into a pandas data frame
+subroutine to execute and analyse a mode
 '''
+def apply_model(Xtrain,Xtest,Ytrain,Ytest,Classes):
+    # create, train and execute the model
+    model = KNeighborsClassifier(n_neighbors=5)
+    model.fit(Xtrain,Ytrain)
+    Ymodel = model.predict(Xtest)
+    # create standard classification report
+    print(classification_report(Ytest, Ymodel, target_names=Classes))
+    # create standard classification plot
+    plot_confusion_matrix(Ytest, Ymodel, classes=Classes,
+                                title='Confusion matrix, without normalization')
+    return
 
+# read the data from https://archive.ics.uci.edu/ml/machine-learning-databases/00388/
 df=pd.read_csv('data.csv')
 
-
-'''
-split data into 70% train and 30% test data without shuffle.
-do this for the input matrix the original and binary output vector
-'''
+# split data into 70% train and 30% test data without shuffle.
+# do this for the input matrix the original and binary output vector
 Xtrain, Xtest, Ytrain, Ytest, Ybtrain, Ybtest = train_test_split(
     df.drop(['y','Unnamed: 0'], axis=1),          # input matrx
     df['y'],                                      # output vector
     df['y'].apply(lambda x: 1 if x == 1 else 0),  # binary output vector
     test_size=0.3,shuffle=False)
 
-'''
-create, train, apply and evaluate the models binary model to classify seizure (1) vs non-seizure (2,3,4,5)
-'''
-bclasses = ['Seizer', 'No Seizer']
-full_classes = ['Seizer', 'Tumor Area', 'Healthy Area','Eyes Closes','Eyes Open']
+# create, execute and evaluate the binary and the full model
+apply_model(Xtrain,Xtest,Ybtrain,Ybtest,['Seizer', 'No Seizer'])
+apply_model(Xtrain,Xtest,Ytrain,Ytest,['Seizer', 'Tumor Area', 'Healthy Area','Eyes Closed','Eyes Open'])
 
-bmodel = KNeighborsClassifier(n_neighbors=5)
-bmodel.fit(Xtrain,Ybtrain)
-Ybmodel = bmodel.predict(Xtest)
-
-model = KNeighborsClassifier(n_neighbors=5)
-model.fit(Xtrain,Ytrain)
-Ymodel = model.predict(Xtest)
-
-# create standard classification report
-print(classification_report(Ybtest, Ybmodel, target_names=bclasses))
-
-# create the standard plot
-ax1 = plot_confusion_matrix(Ybtest, Ybmodel, bclasses,
-                           title='Confusion matrix, without normalization')
-
-print(classification_report(Ytest, Ymodel, target_names=full_classes))
-
-ax2 = plot_confusion_matrix(Ytest, Ymodel, classes=full_classes,
-                            title='Confusion matrix, without normalization')
-
-
+# show the plots
 plt.show()
 
 exit(0)
